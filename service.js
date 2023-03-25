@@ -1,9 +1,9 @@
-function verificaElementosDoCPF(cpf) {
+function validarElementosDoCPF(cpf) {
    return /^\d+$/.test(cpf); 
 }
 
 // Essa função segue o algoritmo de validação de CPF descrito na página oficial da Receita Federal do Brasil
-function validaDigitosVerificadoresDoCPF(cpf) {
+function validarDigitosVerificadoresDoCPF(cpf) {
    const cpfNumerico = cpf.replace(/\D/g, '');
  
    if (cpfNumerico.length !== 11) {
@@ -42,49 +42,19 @@ function validaDigitosVerificadoresDoCPF(cpf) {
    return true;
 }
 
-function validaTipoDoValor(valor) {
-   return typeof valor === 'number' && !isNaN(valor);
+function validarTipoDoValor(valor) {
+   return typeof valor === 'number' && !isNaN(valor); 
 }
 
-function validaValorMaximo(valor) {
+function validarValorMaximo(valor) {
    return valor <= 15000.00;
 }
 
-function validaValorMinimo(valor) {
+function validarValorMinimo(valor) {
    return valor >= -2000.00;
 }
 
-const validarEntradaDeDados = (lancamento) => {
-   let entradaValida = true;
-   let mensagemValidacao = "O lançamento não foi efetuado pela(s) seguinte(s) divergência(s):\n";
-
-   if (!verificaElementosDoCPF(lancamento.cpf)) { 
-      entradaValida = false;
-      mensagemValidacao += "- CPF contém caracteres inválidos.\n";
-   } else if (!validaDigitosVerificadoresDoCPF(lancamento.cpf)) {
-      entradaValida = false;
-      mensagemValidacao += "- CPF contém digitos verificadores inválidos.\n";      
-   }
-
-   if (!validaTipoDoValor(lancamento.valor)) {
-      entradaValida = false;
-      mensagemValidacao += "- Valor contém caracteres não numéricos.\n"; 
-   }
-
-   if (!validaValorMaximo(lancamento.valor)) {
-      entradaValida = false;
-      mensagemValidacao += "- Valor ultrapassou o máximo de 15000,00.\n";  
-   }
-
-   if (!validaValorMinimo(lancamento.valor)) {
-      entradaValida = false;
-      mensagemValidacao += "- Valor ultrapassou o mínimo de -2000,00.\n";  
-   }   
-
-   return entradaValida ? null : mensagemValidacao;
-}
-
-const recuperarSaldosPorConta = (lancamentos) => {
+function calcularSaldoPorCPF(lancamentos) {
    const saldosPorCPF = new Map();
 
    for (const lancamento of lancamentos) {
@@ -96,8 +66,44 @@ const recuperarSaldosPorConta = (lancamentos) => {
       saldosPorCPF.set(cpf, saldosPorCPF.get(cpf) + valor);
    }
 
+   return saldosPorCPF;
+}
+
+const validarEntradaDeDados = (lancamento) => {
+   let entradaValida = true;
+   let mensagemValidacao = "O lançamento não foi efetuado pela(s) seguinte(s) divergência(s):\n";
+
+   if (!validarElementosDoCPF(lancamento.cpf)) { 
+      entradaValida = false;
+      mensagemValidacao += "- CPF contém caracteres inválidos.\n";
+   } else if (!validarDigitosVerificadoresDoCPF(lancamento.cpf)) {
+      entradaValida = false;
+      mensagemValidacao += "- CPF contém digitos verificadores inválidos.\n";      
+   }
+
+   if (!validarTipoDoValor(lancamento.valor)) {
+      entradaValida = false;
+      mensagemValidacao += "- Valor contém caracteres não numéricos.\n"; 
+   }
+
+   if (!validarValorMaximo(lancamento.valor)) {
+      entradaValida = false;
+      mensagemValidacao += "- Valor ultrapassou o máximo de 15000,00.\n";  
+   }
+
+   if (!validarValorMinimo(lancamento.valor)) {
+      entradaValida = false;
+      mensagemValidacao += "- Valor ultrapassou o mínimo de -2000,00.\n";  
+   }   
+
+   return entradaValida ? null : mensagemValidacao;
+}
+
+const recuperarSaldosPorConta = (lancamentos) => {
+   const saldosPorCPF = calcularSaldoPorCPF(lancamentos);
+
    // Transforma o Map saldosPorCPF em um array de objetos com formato {cpf, valor}
-   const resultado = Array.from(saldosPorCPF, ([cpf, valor]) => ({cpf, valor}));
+   const resultado = Array.from(saldosPorCPF, ([cpf, valor]) => ({cpf, valor})); 
 
    return resultado;
 }
@@ -105,6 +111,7 @@ const recuperarSaldosPorConta = (lancamentos) => {
 const recuperarMaiorMenorLancamentos = (cpf, lancamentos) => {
    const lancamentosPorCpf = new Map();
   
+   // Encontra o menor e maior valor do cpf definido
    for (let lancamento of lancamentos) {
       if (lancamento.cpf === cpf) {
         const valor = lancamento.valor;
@@ -116,16 +123,21 @@ const recuperarMaiorMenorLancamentos = (cpf, lancamentos) => {
    
    if (lancamentosPorCpf.has(cpf)) {
      const [menorValor, maiorValor] = lancamentosPorCpf.get(cpf);
-
      return [{cpf, valor: menorValor}, {cpf, valor: maiorValor}];
    } 
-   else {
-     return [];
-   }
+   else return [];
 }
 
 const recuperarMaioresSaldos = (lancamentos) => {
-   return [] // 1 for que pega tudo
+   const saldosPorCPF = calcularSaldoPorCPF(lancamentos);
+ 
+   // Transforma os saldos em um array ordenado do maior para o menor saldo
+   const maioresSaldos = [...saldosPorCPF.entries()]
+     .sort(([, valorA], [, valorB]) => valorB - valorA)
+     .slice(0, 3)
+     .map(([cpf, valor]) => ({ cpf, valor }));
+ 
+   return maioresSaldos;
 }
 
 const recuperarMaioresMedias = (lancamentos) => {
