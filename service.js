@@ -103,9 +103,25 @@ const recuperarSaldosPorConta = (lancamentos) => {
 }
 
 const recuperarMaiorMenorLancamentos = (cpf, lancamentos) => {
-   // For simplezao O(n)
-   return []
+   const lancamentosPorCpf = new Map();
+  
+   for (let lancamento of lancamentos) {
+      if (lancamento.cpf === cpf) {
+        const valor = lancamento.valor;
+        const [menorValor, maiorValor] = lancamentosPorCpf.has(cpf) ? lancamentosPorCpf.get(cpf) : [Infinity, -Infinity];
+  
+        lancamentosPorCpf.set(cpf, [Math.min(menorValor, valor), Math.max(maiorValor, valor)]);
+      }
+    }
+   
+   if (lancamentosPorCpf.has(cpf)) {
+     const [menorValor, maiorValor] = lancamentosPorCpf.get(cpf);
 
+     return [{cpf, valor: menorValor}, {cpf, valor: maiorValor}];
+   } 
+   else {
+     return [];
+   }
 }
 
 const recuperarMaioresSaldos = (lancamentos) => {
