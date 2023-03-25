@@ -69,6 +69,26 @@ function calcularSaldoPorCPF(lancamentos) {
    return saldosPorCPF;
 }
 
+function ordenarPorMaiorValor(mapa) {
+   return [...mapa.entries()]
+     .sort(([, valorA], [, valorB]) => valorB - valorA)
+     .slice(0, 3)
+     .map(([cpf, valor]) => ({ cpf, valor }));
+}
+
+function calcularMediasPorCPF(lancamentos) {
+   const saldosPorCPF = calcularSaldoPorCPF(lancamentos);
+   const mediasPorCPF = new Map();
+ 
+   for (const [cpf, saldo] of saldosPorCPF.entries()) {
+     const numLancamentos = lancamentos.filter((lancamento) => lancamento.cpf === cpf).length;
+     const media = saldo / numLancamentos;
+     mediasPorCPF.set(cpf, media);
+   }
+ 
+   return mediasPorCPF;
+}
+
 const validarEntradaDeDados = (lancamento) => {
    let entradaValida = true;
    let mensagemValidacao = "O lançamento não foi efetuado pela(s) seguinte(s) divergência(s):\n";
@@ -103,9 +123,9 @@ const recuperarSaldosPorConta = (lancamentos) => {
    const saldosPorCPF = calcularSaldoPorCPF(lancamentos);
 
    // Transforma o Map saldosPorCPF em um array de objetos com formato {cpf, valor}
-   const resultado = Array.from(saldosPorCPF, ([cpf, valor]) => ({cpf, valor})); 
+   const saldosPorConta = Array.from(saldosPorCPF, ([cpf, valor]) => ({cpf, valor})); 
 
-   return resultado;
+   return saldosPorConta;
 }
 
 const recuperarMaiorMenorLancamentos = (cpf, lancamentos) => {
@@ -130,18 +150,23 @@ const recuperarMaiorMenorLancamentos = (cpf, lancamentos) => {
 
 const recuperarMaioresSaldos = (lancamentos) => {
    const saldosPorCPF = calcularSaldoPorCPF(lancamentos);
- 
-   // Transforma os saldos em um array ordenado do maior para o menor saldo
-   const maioresSaldos = [...saldosPorCPF.entries()]
-     .sort(([, valorA], [, valorB]) => valorB - valorA)
-     .slice(0, 3)
-     .map(([cpf, valor]) => ({ cpf, valor }));
- 
+  
+   const maioresSaldos = ordenarPorMaiorValor(saldosPorCPF);
+  
    return maioresSaldos;
-}
+ }
+ 
+ function recuperarMaioresMedias(lancamentos) {
+   const mediasPorCPF = calcularMediasPorCPF(lancamentos);
 
-const recuperarMaioresMedias = (lancamentos) => {
+   const maioresMedias = ordenarPorMaiorValor(mediasPorCPF);
 
-   
-    return []
-}
+   return maioresMedias;
+ }
+
+ 
+ 
+ 
+ 
+ 
+ 
