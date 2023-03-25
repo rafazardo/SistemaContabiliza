@@ -42,20 +42,44 @@ function validaDigitosVerificadoresDoCPF(cpf) {
    return true;
 }
 
+function validaTipoDoValor(valor) {
+   return typeof valor === 'number' && !isNaN(valor);
+}
+
+function validaValorMaximo(valor) {
+   return valor <= 15000.00;
+}
+
+function validaValorMinimo(valor) {
+   return valor >= -2000.00;
+}
+
 const validarEntradaDeDados = (lancamento) => {
    let entradaValida = true;
-   let mensagemValidacao = "O lançamento não foi efetuado pela(s) seguinte(s) divergência(s): \n";
+   let mensagemValidacao = "O lançamento não foi efetuado pela(s) seguinte(s) divergência(s):\n";
 
    if (!verificaElementosDoCPF(lancamento.cpf)) { 
       entradaValida = false;
-      mensagemValidacao += "- CPF contém caracteres inválidos. \n";
-   } 
-   else if (!validaDigitosVerificadoresDoCPF(lancamento.cpf)) {
+      mensagemValidacao += "- CPF contém caracteres inválidos.\n";
+   } else if (!validaDigitosVerificadoresDoCPF(lancamento.cpf)) {
       entradaValida = false;
-      mensagemValidacao += "- CPF contém digitos verificadores inválidos. \n";      
+      mensagemValidacao += "- CPF contém digitos verificadores inválidos.\n";      
    }
 
-   
+   if (!validaTipoDoValor(lancamento.valor)) {
+      entradaValida = false;
+      mensagemValidacao += "- Valor contém caracteres não numéricos.\n"; 
+   }
+
+   if (!validaValorMaximo(lancamento.valor)) {
+      entradaValida = false;
+      mensagemValidacao += "- Valor ultrapassou o máximo de 15000,00.\n";  
+   }
+
+   if (!validaValorMinimo(lancamento.valor)) {
+      entradaValida = false;
+      mensagemValidacao += "- Valor ultrapassou o mínimo de -2000,00.\n";  
+   }   
 
    return entradaValida ? null : mensagemValidacao;
 }
