@@ -1,15 +1,13 @@
 function validarElementosDoCPF(cpf) {
-   return /^\d+$/.test(cpf); 
+   return /^\d+$/.test(cpf);  // A expressão regular /^\d+$/ verifica se a string contém apenas dígitos.
 }
 
 // Essa função segue o algoritmo de validação de CPF descrito na página oficial da Receita Federal do Brasil
 function validarDigitosVerificadoresDoCPF(cpf) {
    const cpfNumerico = cpf.replace(/\D/g, '');
- 
-   if (cpfNumerico.length !== 11) {
-     return false;
-   }
- 
+
+   if (cpfNumerico.length !== 11) return false;
+
    const digitosIguais = /^(\d)\1+$/.test(cpfNumerico);
 
    if (digitosIguais) return false;
@@ -18,31 +16,30 @@ function validarDigitosVerificadoresDoCPF(cpf) {
    let soma = 0;
 
    for (let i = 0; i < 9; i++) {
-     soma += parseInt(cpfNumerico.charAt(i)) * (10 - i);
+      soma += parseInt(cpfNumerico.charAt(i)) * (10 - i);
    }
- 
+
    let digitoVerificador1 = 11 - (soma % 11);
    if (digitoVerificador1 > 9) digitoVerificador1 = 0;
- 
    if (digitoVerificador1 !== parseInt(cpfNumerico.charAt(9))) return false;
- 
+
    // Valida o segundo dígito verificador
    soma = 0;
 
    for (let i = 0; i < 10; i++) {
-     soma += parseInt(cpfNumerico.charAt(i)) * (11 - i);
+      soma += parseInt(cpfNumerico.charAt(i)) * (11 - i);
    }
- 
+
    let digitoVerificador2 = 11 - (soma % 11);
    if (digitoVerificador2 > 9) digitoVerificador2 = 0;
-   
    if (digitoVerificador2 !== parseInt(cpfNumerico.charAt(10))) return false;
- 
+
    // Se chegou até aqui, o CPF é válido
    return true;
 }
 
 function validarTipoDoValor(valor) {
+   // O operador typeof retorna 'number' para NaN, por isso é necessário usar o método isNaN.
    return typeof valor === 'number' && !isNaN(valor); 
 }
 
@@ -62,30 +59,48 @@ function calcularSaldoPorCPF(lancamentos) {
       const valor = lancamento.valor;
 
       if (!saldosPorCPF.has(cpf)) saldosPorCPF.set(cpf, 0); 
-      
+
       saldosPorCPF.set(cpf, saldosPorCPF.get(cpf) + valor);
    }
 
    return saldosPorCPF;
 }
 
+const encontrarMenorMaiorValorPorCpf = (cpf, lancamentos) => {
+   const lancamentosPorCpf = new Map();
+
+   for (let lancamento of lancamentos) {
+      if (lancamento.cpf === cpf) {
+         const valor = lancamento.valor;
+         // Se o CPF não tiver sido registrado anteriormente, valores iniciais infinitos são usados para que possam ser atualizados durante o loop.
+         const [menorValor, maiorValor] = lancamentosPorCpf.has(cpf) ? lancamentosPorCpf.get(cpf) : [Infinity, -Infinity];
+
+         lancamentosPorCpf.set(cpf, [Math.min(menorValor, valor), Math.max(maiorValor, valor)]);
+         }
+   }
+
+   return lancamentosPorCpf.get(cpf);
+}
+
 function ordenarPorMaiorValor(mapa) {
-   return [...mapa.entries()]
-     .sort(([, valorA], [, valorB]) => valorB - valorA)
-     .slice(0, 3)
-     .map(([cpf, valor]) => ({ cpf, valor }));
+   // Transforma o mapa em um array de pares chave-valor, onde cada par é representado por um array interno contendo o cpf e o valor correspondente
+   return [...mapa.entries()] 
+      .sort(([, valorA], [, valorB]) => valorB - valorA)
+      .slice(0, 3) 
+      .map(([cpf, valor]) => ({ cpf, valor }));
 }
 
 function calcularMediasPorCPF(lancamentos) {
    const saldosPorCPF = calcularSaldoPorCPF(lancamentos);
    const mediasPorCPF = new Map();
- 
+
    for (const [cpf, saldo] of saldosPorCPF.entries()) {
-     const numLancamentos = lancamentos.filter((lancamento) => lancamento.cpf === cpf).length;
-     const media = saldo / numLancamentos;
-     mediasPorCPF.set(cpf, media);
+      const numLancamentos = lancamentos.filter((lancamento) => lancamento.cpf === cpf).length;
+      const media = saldo / numLancamentos;
+      
+      mediasPorCPF.set(cpf, media);
    }
- 
+
    return mediasPorCPF;
 }
 
@@ -129,22 +144,9 @@ const recuperarSaldosPorConta = (lancamentos) => {
 }
 
 const recuperarMaiorMenorLancamentos = (cpf, lancamentos) => {
-   const lancamentosPorCpf = new Map();
-  
-   // Encontra o menor e maior valor do cpf definido
-   for (let lancamento of lancamentos) {
-      if (lancamento.cpf === cpf) {
-        const valor = lancamento.valor;
-        const [menorValor, maiorValor] = lancamentosPorCpf.has(cpf) ? lancamentosPorCpf.get(cpf) : [Infinity, -Infinity];
-  
-        lancamentosPorCpf.set(cpf, [Math.min(menorValor, valor), Math.max(maiorValor, valor)]);
-      }
-    }
-   
-   if (lancamentosPorCpf.has(cpf)) {
-     const [menorValor, maiorValor] = lancamentosPorCpf.get(cpf);
-     return [{cpf, valor: menorValor}, {cpf, valor: maiorValor}];
-   } 
+   const [menorValor, maiorValor] = encontrarMenorMaiorValorPorCpf(cpf, lancamentos) ?? [null, null];
+
+   if (menorValor !== null && maiorValor !== null) return [{ cpf, valor: menorValor }, { cpf, valor: maiorValor }];
    else return [];
 }
 
@@ -154,15 +156,15 @@ const recuperarMaioresSaldos = (lancamentos) => {
    const maioresSaldos = ordenarPorMaiorValor(saldosPorCPF);
   
    return maioresSaldos;
- }
+}
  
- function recuperarMaioresMedias(lancamentos) {
+function recuperarMaioresMedias(lancamentos) {
    const mediasPorCPF = calcularMediasPorCPF(lancamentos);
 
    const maioresMedias = ordenarPorMaiorValor(mediasPorCPF);
 
    return maioresMedias;
- }
+}
 
  
  
