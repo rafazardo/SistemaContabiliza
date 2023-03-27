@@ -1,5 +1,6 @@
 function validarElementosDoCPF(cpf) {
-   return /^\d+$/.test(cpf);  // A expressão regular /^\d+$/ verifica se a string contém apenas dígitos.
+   // A expressão regular /^\d+$/ verifica se a string contém apenas dígitos.
+   return /^\d+$/.test(cpf);  
 }
 
 // Essa função segue o algoritmo de validação de CPF descrito na página oficial da Receita Federal do Brasil
@@ -76,7 +77,7 @@ const encontrarMenorMaiorValorPorCpf = (cpf, lancamentos) => {
          const [menorValor, maiorValor] = lancamentosPorCpf.has(cpf) ? lancamentosPorCpf.get(cpf) : [Infinity, -Infinity];
 
          lancamentosPorCpf.set(cpf, [Math.min(menorValor, valor), Math.max(maiorValor, valor)]);
-         }
+      }
    }
 
    return lancamentosPorCpf.get(cpf);
@@ -95,9 +96,10 @@ function calcularMediasPorCPF(lancamentos) {
    const mediasPorCPF = new Map();
 
    for (const [cpf, saldo] of saldosPorCPF.entries()) {
+      // Filtra os lançamentos para obter apenas os que correspondem ao CPF atual
       const numLancamentos = lancamentos.filter((lancamento) => lancamento.cpf === cpf).length;
       const media = saldo / numLancamentos;
-      
+
       mediasPorCPF.set(cpf, media);
    }
 
@@ -144,6 +146,8 @@ const recuperarSaldosPorConta = (lancamentos) => {
 }
 
 const recuperarMaiorMenorLancamentos = (cpf, lancamentos) => {
+   // Utiliza o operador de coalescência nula para definir um valor padrão para o caso em que a função
+   // retorne null.
    const [menorValor, maiorValor] = encontrarMenorMaiorValorPorCpf(cpf, lancamentos) ?? [null, null];
 
    if (menorValor !== null && maiorValor !== null) return [{ cpf, valor: menorValor }, { cpf, valor: maiorValor }];
@@ -165,10 +169,3 @@ function recuperarMaioresMedias(lancamentos) {
 
    return maioresMedias;
 }
-
- 
- 
- 
- 
- 
- 
